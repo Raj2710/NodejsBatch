@@ -104,29 +104,30 @@ router.put('/change-status/:id',async(req,res)=>{
 
 router.get('/report',async(req,res)=>{
   try {
-    let reportData = []
     let resolution = await Resolution.find()
 
-    resolution.forEach(async(e,i)=>{
+   let myPromise = new Promise(async(resolve,reject)=>{
+    let data = []
+    for(e of resolution){
       let leadsData = await LoanRequest.findOne({_id:mongodb.ObjectId(e.leadId)})
-      reportData.push({
+      data.push({
         name:leadsData.name,
         amount:leadsData.amount,
         quotedAmount:e.quotedAmount,
         status:e.status
       })
-    })
+    }
+    if(data.length)
+      resolve(data)
+    else
+      reject("Empty Data")
+  })
 
-    setTimeout(()=>{
-      res.send({statusCode:200,reportData})
-    },1000)
-    
+   myPromise.then((value)=>{res.send({statusCode:200,reportData:value})})
+            .catch((error)=>console.log(error))
   } catch (error) {
     console.log(error)
     res.send({statusCode:500,message:"Internal Server Error",error})
   }
 })
-
-
-
 module.exports = router;
